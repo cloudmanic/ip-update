@@ -15,15 +15,32 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.18"
+          go-version: "1.16" # Replace with your Go version
 
-      - name: Build binary for macOS
+      - name: Build binary
         run: |
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ip-update
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ip-update
+      - name: Create GitHub Release
+        id: create_github_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - New release for macOS
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_github_release.outputs.upload_url }}
+          asset_path: ./ip-update
+          asset_name: ip-update
+          asset_content_type: application/octet-stream
